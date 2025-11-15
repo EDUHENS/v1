@@ -11,6 +11,13 @@ export const auth0 = new Auth0Client({
     audience: process.env.AUTH0_AUDIENCE,
     scope: process.env.AUTH0_SCOPE || "openid profile email offline_access",
   },
+  routes: {
+    login: "/api/auth/login",
+    logout: "/api/auth/logout",
+    callback: "/api/auth/callback",
+    profile: "/api/auth/me",
+    accessToken: "/api/auth/access-token",
+  },
   onCallback: async (error, ctx) => {
     const baseUrl = process.env.APP_BASE_URL || process.env.AUTH0_BASE_URL || "http://localhost:3000";
     // Reason: Default post-login destination is Dashboard Selection when no returnTo is provided.
