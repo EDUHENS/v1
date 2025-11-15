@@ -28,7 +28,15 @@ export const auth0 = new Auth0Client({
       return NextResponse.redirect(url);
     }
 
-    // Successful authentication: send the user to original destination (or dashboard selection by default)
-    return NextResponse.redirect(new URL(safeReturnTo, baseUrl));
+    // For successful authentication, let the SDK handle the default redirect
+    // It will redirect to the returnTo URL or the default destination
+    // We'll redirect to "/" first to let useUser() detect the session, then redirect to destination
+    const url = new URL("/", baseUrl);
+    if (safeReturnTo && safeReturnTo !== "/dashboard-selection") {
+      url.searchParams.set("returnTo", safeReturnTo);
+    }
+    // Add a small delay query param to ensure session is established
+    url.searchParams.set("_auth", "1");
+    return NextResponse.redirect(url);
   },
 });
