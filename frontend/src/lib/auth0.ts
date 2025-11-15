@@ -20,30 +20,29 @@ export const auth0 = new Auth0Client({
   },
   onCallback: async (error, ctx) => {
     const baseUrl = process.env.APP_BASE_URL || process.env.AUTH0_BASE_URL || "http://localhost:3000";
-    // Reason: Default post-login destination is Dashboard Selection when no returnTo is provided.
     const safeReturnTo = ctx?.returnTo || "/dashboard-selection";
+    console.info("[Auth0] onCallback invoked", {
+      hasError: Boolean(error),
+      safeReturnTo,
+      baseUrl,
+    });
 
     if (error) {
-      // Reason: When the user cancels at the IdP (e.g., Google), Auth0 redirects back
-      // with an error. Redirecting to the SDK route "/api/auth/login" would immediately
-      // re-trigger the Hosted Login. We want to show our own app's login UI instead.
-      // Therefore, redirect to the app's local login page ("/") and include context.
       const reason = ("cause" in error && (error as any).cause?.code) || error.code || "access_denied";
-      const url = new URL("/", baseUrl); // Redirect to local login UI, not Hosted Login
+      console.error("[Auth0] onCallback error", { reason });
+      const url = new URL("/", baseUrl);
       url.searchParams.set("returnTo", safeReturnTo);
       url.searchParams.set("authError", String(reason));
+      console.info("[Auth0] redirecting due to error", url.toString());
       return NextResponse.redirect(url);
     }
 
-    // For successful authentication, let the SDK handle the default redirect
-    // It will redirect to the returnTo URL or the default destination
-    // We'll redirect to "/" first to let useUser() detect the session, then redirect to destination
     const url = new URL("/", baseUrl);
     if (safeReturnTo && safeReturnTo !== "/dashboard-selection") {
       url.searchParams.set("returnTo", safeReturnTo);
     }
-    // Add a small delay query param to ensure session is established
     url.searchParams.set("_auth", "1");
+    console.info("[Auth0] successful callback redirect", url.toString());
     return NextResponse.redirect(url);
   },
 });
